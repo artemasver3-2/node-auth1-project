@@ -2,10 +2,10 @@
 // middleware functions from `auth-middleware.js`. You will need them here!
 
 const express = require('express')
-const { checkUsernameFree, checkUsernameExists, checkPasswordLength } = require('../auth/auth-middleware')
+const mdw = require('../auth/auth-middleware')
 const AuthRouter = express.Router()
 const User = require('../users/users-model')
-
+const bcrypt = require('bcryptjs')
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -30,13 +30,15 @@ const User = require('../users/users-model')
   }
  */
 
-  AuthRouter.post('/register', checkUsernameFree, checkPasswordLength, (req, res, next) => {
+  AuthRouter.post('/register', mdw.checkPasswordLength, mdw.checkUsernameExists, (req, res, next) => {
+    const { username, password } = req.body 
+    const hashPassword = bcrypt.hashSync( password, 10 )
     User.add({
-      username: req.body.username, 
-      password: req.body.password,
+      username, 
+      password: hashPassword,
     })
-      .then(user => {
-        res.json(user)
+      .then(saved => {
+        res.status(201).json(saved)
       })
       .catch(next)
   })
@@ -57,15 +59,19 @@ const User = require('../users/users-model')
     "message": "Invalid credentials"
   }
  */
-  AuthRouter.post('/login', checkUsernameExists, checkPasswordLength, (req, res, next) => {
-    User.findBy({
-      username: req.body.username, 
-      password: req.body.password,
-    })
-      .then(user => {
-        res.status(200).json(user)
+  AuthRouter.post('/login', mdw.checkUsernameExists, mdw.checkPasswordLength, (req, res, next) => {
+    const { password } = req.body
+    if(bcrypt.compareSync(password, req.user.password)) {
+       req.session.user = req.user
+    res.json({
+      message: `Welcome ${req.user.username}`
+    }) 
+    } else {
+      next({
+        status: 402, 
+        message: 'Invalid credentials'
       })
-      .catch(next)
+    }
   })
 
 

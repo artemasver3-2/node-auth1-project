@@ -11,10 +11,11 @@ const restricted = async (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
-    res.status(401).json({
+    next(
+      res.status(401).json({
       message: 'You shall not pass!',
-    });
-  }
+    })
+  )}
 };
 
 /*
@@ -31,10 +32,11 @@ const checkUsernameFree = async (req, res, next) => {
     if (!reqUsername.length) {
       next();
     } else {
-      res.status(422).json({
+      next(   
+        res.status(422).json({
         message: 'Username taken',
-      });
-    }
+      })
+    )}
   } catch (err) {
     next(err);
   }
@@ -54,10 +56,11 @@ const checkUsernameExists = async (req, res, next) => {
     if (reqUsername) {
       next();
     } else {
-      res.status(401).json({
+      next(   
+        res.status(401).json({
         message: 'Invalid credentials',
-      });
-    }
+      })
+    )}
   } catch (err) {
     next(err);
   }

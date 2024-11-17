@@ -27,21 +27,27 @@ const UsersRouter = express.Router()
   }
  */
 
-  UsersRouter.get('/', (req, res, next) => {
-    User.find()
-      .then(user => {
+  UsersRouter.get('/', async (req, res, next) => {
+    try {
+      const user = await User.find()
+      .then(
         res.json(user)
-      })
-      .catch(next)
+      )
+    } catch(err) {
+      next(err)
+    }
   })
   
-  UsersRouter.get('/:id', (req, res, next) => {
-    const user_id = req.params.id
-    User.findById(user_id)
-      .then(user => {
-        res.json(user)
-      })
-      .catch(next)
+  UsersRouter.get('/:id', async (req, res, next) => {
+    try {
+      const user_id = req.params.id
+      const user = await User.findById(user_id)
+        .then(
+          res.json(user)
+        )
+    } catch(err) {
+      next(err)
+    }
   })
 
 // Don't forget to add the router to the `exports` object so it can be required in other modules
