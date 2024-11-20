@@ -1,13 +1,40 @@
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
-const UsersRouter = require('./users/users-router');
-const AuthRouter = require('./auth/auth-router');
-const server = express();
-const knex = require('knex')
 const session = require('express-session');
-const Store = require('connect-session-knex')(session);
+const Store = require('connect-session-knex')(session)
+const userRoutes = require('./users/users-router')
+const useAuth = require('./auth/auth-router')
+const server = express();
+const knex = require('../data/db-config')
 
+server.use(session({
+  name: 'chocolatechip',
+  secret: 'ssh',
+  saveUninitialized: false,
+  resave: false,
+  store: new Store({
+    knex,
+    createTable: true,
+    clearInterval: 1000 * 60 * 10,
+    tablename: 'sessions',
+    sidfieldname: 'sid',
+  }),
+  cookie: {
+    maxage: 1000 * 60 * 10,
+    secure: false,
+    httpOnly: true,
+  }
+
+}))
+server.use(helmet());
+server.use(express.json());
+server.use(cors());
+
+
+
+server.use('/api/auth', useAuth)
+server.use('/api/users', userRoutes)
 /**
   Do what needs to be done to support sessions with the `express-session` package!
   To respect users' privacy, do NOT send them a cookie unless they log in.
@@ -21,41 +48,10 @@ const Store = require('connect-session-knex')(session);
   or you can use a session store like `connect-session-knex`.
  */
 
-server.use(session({
-  name: 'chocolatechip',
-  secret: 'nobody tosses a dwarf!',
-  httpOnly: true, 
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 1 * 24 * 60 * 60 * 1000,
-    secure: true, 
-  }, 
-  store: new Store ({
-    knex, 
-    createTable: true, 
-    tablename: 'sessions',
-    clearInterval: 1000* 60 * 10,
-    sidfieldname: 'sid',
-  }),
-}))
-
-server.use(helmet());
-server.use(express.json());
-server.use(cors());
-
-server.use('/api/users', UsersRouter);
-server.use('/api/auth', AuthRouter);
 
 server.get("/", (req, res) => {
   res.json({ api: "up" });
 });
 
-server.use((err, req, res, next) => { // eslint-disable-line
-  res.status(err.status || 500).json({
-    message: err.message,
-    stack: err.stack,
-  });
-});
 
-module.exports = { server };
+module.exports = server;

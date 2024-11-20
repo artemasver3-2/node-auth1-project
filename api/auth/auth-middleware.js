@@ -7,15 +7,16 @@ const User = require('../users/users-model');
     "message": "You shall not pass!"
   }
 */
-const restricted = async (req, res, next) => {
+const restricted = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
     next(
       res.status(401).json({
-      message: 'You shall not pass!',
-    })
-  )}
+        "message": "You shall not pass!"
+      })
+    )
+    }
 };
 
 /*
@@ -32,11 +33,10 @@ const checkUsernameFree = async (req, res, next) => {
     if (!reqUsername.length) {
       next();
     } else {
-      next(   
         res.status(422).json({
-        message: 'Username taken',
-      })
-    )}
+          "message": "Username taken"
+        })
+    }
   } catch (err) {
     next(err);
   }
@@ -52,15 +52,15 @@ const checkUsernameFree = async (req, res, next) => {
 */
 const checkUsernameExists = async (req, res, next) => {
   try {
-    const reqUsername = await User.findBy({ username: req.body.username });
-    if (reqUsername) {
+    const aUser = await User.findBy({ username: req.body.username });
+    if (aUser.length) {
+      req.user = aUser[0]
       next();
     } else {
-      next(   
         res.status(401).json({
-        message: 'Invalid credentials',
-      })
-    )}
+          "message": "Invalid credentials"
+        })
+     }
   } catch (err) {
     next(err);
   }
